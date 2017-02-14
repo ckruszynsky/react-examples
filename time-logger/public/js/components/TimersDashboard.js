@@ -8,7 +8,7 @@ class TimersDashboard extends Component {
             <div className="ui three column centered grid">
                 <div className="column">
                     <EditableTimerList />
-                    <ToggableTimerForm isOpen={true} />
+                    <ToggableTimerForm isOpen={false} />
                 </div>
             </div>
         )
