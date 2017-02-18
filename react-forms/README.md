@@ -17,3 +17,19 @@ npm start
 ````
 
 The server is now running - watch the console output for instructions, but by default, your server is now running at [http://192.168.2.18:9966/](http://192.168.2.18:9966/)
+
+### Useful Form Modules 
+formsy-React
+https://github.com/christianalfoni/formsy-react
+
+react-input-enhancements 
+https://github.com/alexkuz/react-input-enhancements
+
+tcomb-form 
+http://gcanti.github.io/tcomb-form
+
+winterfell
+https://github.com/andrewhataway/winterfell
+
+react-redux-form
+https://github.com/davidkpiano/react-redux-form

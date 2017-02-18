@@ -4,6 +4,8 @@ import isMobilePhone from 'validator/lib/isMobilePhone';
 import FieldComponent from './fieldComponent.jsx';
 import CourseSelect from './course-select.jsx';
 
+let apiClient;
+
 const content = document.createElement('div');
 document.body.appendChild(content);
 
@@ -11,16 +13,33 @@ module.exports = React.createClass({
   displayName: "Sign up Form",
 
   onFormSubmit(evt) {
-    const people = this.state.people;
-    console.log(people);
-    let person = this.state.fields;
-
     evt.preventDefault();
+    const person = this.state.fields;
+
     if (this.validate()) return;
-   
-    people.push(person);
-    const fields = Object.assign({}, {name: '', email:''});
-    this.setState({ people,fields });
+
+    const people = [...this.state.people, person];
+    const fields = Object.assign({}, { name: '', email: '', course: '', department: '' });
+
+    this.setState({ _saveStatus: 'SAVING' });
+    apiClient.savePeople(people)
+      .then(() => {
+        console.log('Save successful');
+        this.setState({
+          people: people,
+          fields: {
+            name: '',
+            email: '',
+            course: '',
+            department: '',
+          },
+           _saveStatus: 'READY',
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+        this.setState({ _saveStatus: 'ERROR' });
+      });
   },
 
   onInputChange({name, value, error }) {
@@ -34,10 +53,18 @@ module.exports = React.createClass({
   },
 
   getInitialState() {
-    return { fields: {
-      name: '',
-      email: ''
-    }, people: [], fieldErrors: [] };
+    return {
+      fields: {
+        name: '',
+        email: '',
+        department: '',
+        course: ''
+      },
+      people: [],
+      fieldErrors: [],
+      _loading: false,
+      _saveStatus: 'READY'
+    };
   },
 
   validate() {
@@ -45,21 +72,35 @@ module.exports = React.createClass({
     const fieldErrors = this.state.fieldErrors;
     const errMessages = Object.keys(fieldErrors).filter((k) => fieldErrors[k]);
 
-    if (!person.name){
+    if (!person.name) {
       return true;
-    } 
+    }
     if (!person.email) {
       return true;
     }
-    if (errMessages.length){
+    if (!person.department) {
       return true;
-    } 
+    }
+
+    if (errMessages.length) {
+      return true;
+    }
     return false;
   },
 
 
+  componentWillMount() {
+    this.setState({ _loading: true });
+    apiClient.loadPeople().then((people) => {
+      this.setState({ _loading: false, people: people });
+    });
+  },
+
   render() {
-    let people = this.state.people.map(({name, email, phone}, i) => <li key={i}>{name}({email}) {phone} </li>);
+    console.log(this.state._saveStatus);
+    if (this.state._loading) {
+      return <img alt='loading' src='/img/loading.gif' />;
+    }
     return (
       <div>
         <h1>Sign up sheet </h1>
@@ -81,17 +122,62 @@ module.exports = React.createClass({
             />
           <br />
 
-
-          <input type="submit" disabled={this.validate()} />
-        </form>
+          <CourseSelect
+            department={this.state.fields.department}
+            course={this.state.fields.course}
+            onChange={this.onInputChange}
+            />
+          <br />
+          {{
+            SAVING: <input value='Saving....' type='submit' disabled />,
+            SUCCESS: <input value='Saved!' type='submit' disabled />,
+            ERROR: <input value='Save Failed - Retry?' type='submit'
+              disabled={this.validate()}
+              />,
+            READY: <input
+              value='Submit'
+              type='submit'
+              disabled={this.validate()}
+              />
+          }[this.state._saveStatus]}
+          </form>
 
         <div>
           <h3>People</h3>
           <ul>
-            {people}
+            {this.state.people.map(({ name, email, department, course }, i) =>
+              <li key={i}>{[name, email, department, course].join(' - ')}</li>
+            )}
           </ul>
         </div>
       </div>
     );
   },
 });
+
+apiClient = {
+  loadPeople: function () {
+    return {
+      then: function (cb) {
+        setTimeout(() => {
+          cb(JSON.parse(localStorage.people || '[]'));
+        }, 1000);
+      },
+    };
+  },
+
+  savePeople: function (people) {
+    const success = !!(this.count++ % 2);
+
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        if (!success) return reject({ success });
+
+        localStorage.people = JSON.stringify(people);
+        return resolve({ success });
+      }, 1000);
+    });
+  },
+
+  count: 1,
+};
