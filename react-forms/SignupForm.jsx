@@ -2,6 +2,7 @@ import React from 'react';
 import isEmail from 'validator/lib/isEmail';
 import isMobilePhone from 'validator/lib/isMobilePhone';
 import FieldComponent from './fieldComponent.jsx';
+import CourseSelect from './course-select.jsx';
 
 const content = document.createElement('div');
 document.body.appendChild(content);
@@ -10,40 +11,54 @@ module.exports = React.createClass({
   displayName: "Sign up Form",
 
   onFormSubmit(evt) {
-    const people = [...this.state.people];
-    const person = this.state.fields;
-    const fieldErrors = this.validate(person);
-    this.setState({ fieldErrors });
-    evt.preventDefault();
+    const people = this.state.people;
+    console.log(people);
+    let person = this.state.fields;
 
-    if (Object.keys(fieldErrors).length > 0) return;
+    evt.preventDefault();
+    if (this.validate()) return;
+   
     people.push(person);
-    this.setState({ people, fields: [] });
+    const fields = Object.assign({}, {name: '', email:''});
+    this.setState({ people,fields });
   },
 
-  onInputChange(evt) {
+  onInputChange({name, value, error }) {
     const fields = this.state.fields;
-    fields[evt.target.name] = evt.target.value;
-    this.setState({ fields });
+    const fieldErrors = this.state.fieldErrors;
+
+    fields[name] = value;
+    fieldErrors[name] = error;
+
+    this.setState({ fields, fieldErrors });
   },
 
   getInitialState() {
-    return { fields: {}, people: [], fieldErrors: [] };
+    return { fields: {
+      name: '',
+      email: ''
+    }, people: [], fieldErrors: [] };
   },
 
-  validate(person) {
-    let errors = {};
-    if (!person.name) errors.name = 'Name Required';
-    if (!person.email) errors.email = 'Email Required';
-    if (!person.phone) errors.phone = 'Phone Required';
+  validate() {
+    const person = this.state.fields;
+    const fieldErrors = this.state.fieldErrors;
+    const errMessages = Object.keys(fieldErrors).filter((k) => fieldErrors[k]);
 
-    if (person.email && !isEmail(person.email)) errors.email = 'Invalid Email';
-    if (person.phone && !isMobilePhone(person.phone)) errors.phone = 'Invalid Phone';
-    return errors;
+    if (!person.name){
+      return true;
+    } 
+    if (!person.email) {
+      return true;
+    }
+    if (errMessages.length){
+      return true;
+    } 
+    return false;
   },
+
 
   render() {
-    console.log(this.state);
     let people = this.state.people.map(({name, email, phone}, i) => <li key={i}>{name}({email}) {phone} </li>);
     return (
       <div>
@@ -55,7 +70,7 @@ module.exports = React.createClass({
             value={this.state.fields.name}
             onChange={this.onInputChange}
             validate={(val) => (val ? false : 'Name Required ')}
-          />
+            />
           <br />
           <FieldComponent
             placeholder="Email"
@@ -63,15 +78,7 @@ module.exports = React.createClass({
             value={this.state.fields.email}
             onChange={this.onInputChange}
             validate={(val) => (isEmail(val) ? false : 'Invalid Email')}
-          />
-          <br />
-          <FieldComponent
-            placeholder="Phone"
-            name="phone"
-            value={this.state.fields.phone}
-            onChange={this.onInputChange}
-            validate={(val) => (isMobilePhone(val) ? false : 'Invalid Phone')}
-          />          
+            />
           <br />
 
 
