@@ -1,6 +1,7 @@
 import React from 'react';
 import isEmail from 'validator/lib/isEmail';
 import isMobilePhone from 'validator/lib/isMobilePhone';
+import FieldComponent from './fieldComponent.jsx';
 
 const content = document.createElement('div');
 document.body.appendChild(content);
@@ -8,86 +9,81 @@ document.body.appendChild(content);
 module.exports = React.createClass({
   displayName: "Sign up Form",
 
-  onFormSubmit(evt){    
+  onFormSubmit(evt) {
     const people = [...this.state.people];
     const person = this.state.fields;
     const fieldErrors = this.validate(person);
-    this.setState({fieldErrors});
-    evt.preventDefault();    
+    this.setState({ fieldErrors });
+    evt.preventDefault();
 
-    if(Object.keys(fieldErrors).length > 0) return;
+    if (Object.keys(fieldErrors).length > 0) return;
     people.push(person);
-    this.setState({ people, fields: []});
+    this.setState({ people, fields: [] });
   },
 
-  onInputChange(evt){
+  onInputChange(evt) {
     const fields = this.state.fields;
     fields[evt.target.name] = evt.target.value;
-    this.setState({fields});
-  },
-  
-  getInitialState(){
-    return { fields:{}, people:[], fieldErrors: [] };
+    this.setState({ fields });
   },
 
-  validate(person){
+  getInitialState() {
+    return { fields: {}, people: [], fieldErrors: [] };
+  },
+
+  validate(person) {
     let errors = {};
-    if(!person.name) errors.name = 'Name Required';
-    if(!person.email) errors.email = 'Email Required';
-    if(!person.phone) errors.phone = 'Phone Required';
-    
-    if(person.email && !isEmail(person.email)) errors.email = 'Invalid Email';
-    if(person.phone && !isMobilePhone(person.phone)) errors.phone = 'Invalid Phone';
+    if (!person.name) errors.name = 'Name Required';
+    if (!person.email) errors.email = 'Email Required';
+    if (!person.phone) errors.phone = 'Phone Required';
+
+    if (person.email && !isEmail(person.email)) errors.email = 'Invalid Email';
+    if (person.phone && !isMobilePhone(person.phone)) errors.phone = 'Invalid Phone';
     return errors;
   },
 
   render() {
     console.log(this.state);
-    let people = this.state.people.map(({name,email,phone},i) => <li key={i}>{name}({ email}) {phone} </li>);
+    let people = this.state.people.map(({name, email, phone}, i) => <li key={i}>{name}({email}) {phone} </li>);
     return (
-     <div>
-       <h1>Sign up sheet </h1>
-       <form onSubmit={this.onFormSubmit}>
-          <input
+      <div>
+        <h1>Sign up sheet </h1>
+        <form onSubmit={this.onFormSubmit}>
+          <FieldComponent
             placeholder='Name'
             name='name'
             value={this.state.fields.name}
             onChange={this.onInputChange}
+            validate={(val) => (val ? false : 'Name Required ')}
           />
-
-          <span style={{color: 'red'}}>{this.state.fieldErrors.name}</span>
           <br />
-
-          <input
-            placeholder='Email'
-            name='email'
+          <FieldComponent
+            placeholder="Email"
+            name="email"
             value={this.state.fields.email}
             onChange={this.onInputChange}
+            validate={(val) => (isEmail(val) ? false : 'Invalid Email')}
           />
-       
-            <span style={{color: 'red'}}>{this.state.fieldErrors.email}</span>
-            <br />  
-
-             <input
-                placeholder='Phone'
-                name='phone'
-                value={this.state.fields.phone}
-                onChange={this.onInputChange}
-             />
-       
-            <span style={{color: 'red'}}>{this.state.fieldErrors.phone}</span>
-            <br />  
+          <br />
+          <FieldComponent
+            placeholder="Phone"
+            name="phone"
+            value={this.state.fields.phone}
+            onChange={this.onInputChange}
+            validate={(val) => (isMobilePhone(val) ? false : 'Invalid Phone')}
+          />          
+          <br />
 
 
-         <input type="submit"/>
-       </form>
+          <input type="submit" disabled={this.validate()} />
+        </form>
 
-       <div>
-         <h3>People</h3>
-         <ul>
-           {people}
+        <div>
+          <h3>People</h3>
+          <ul>
+            {people}
           </ul>
-       </div>
+        </div>
       </div>
     );
   },
